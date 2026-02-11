@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <base target="_top">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-sub: #64748b;
+            --border: #e2e8f0;
+            --danger: #ef4444;
+            --danger-bg: #fef2f2;
+            --warning: #f59e0b;
+            --warning-bg: #fffbeb;
+            --success: #10b981;
+
+            /* Icons colors */
+            --icon-sheet: #16a34a;
+            --icon-doc: #2563eb;
+            --icon-slide: #f59e0b;
+            --icon-pdf: #ef4444;
+            --icon-default: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 0 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 60px;
+            flex-shrink: 0;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* 3-Pane Layout */
+        .container {
+            display: grid;
+            grid-template-columns: 320px 1fr 300px;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Pane 1: File List */
+        .pane-files {
+            background: var(--card-bg);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            /* Header fixed, list scrolls */
+        }
+
+        /* Pane 2: User List (Main) */
+        .pane-main {
+            background: #f1f5f9;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+
+        /* Pane 3: Details & Settings */
+        .pane-details {
+            background: var(--card-bg);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+
+        /* Sidebar Components */
+        .sidebar-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            font-weight: 500;
+            color: var(--text-sub);
+            font-size: 0.875rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .refresh-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--primary);
+            font-size: 0.875rem;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            padding: 0.5rem;
+            gap: 0.25rem;
+            border-bottom: 1px solid var(--border);
+            background: #f8fafc;
+            overflow-x: auto;
+            flex-shrink: 0;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            color: var(--text-sub);
+            cursor: pointer;
+            white-space: nowrap;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            background-color: #e2e8f0;
+        }
+
+        .tab-btn.active {
+            background-color: white;
+            color: var(--primary);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        /* File List Items */
+        .file-list-container {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .file-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .file-item {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .file-item:hover {
+            background-color: #f8fafc;
+        }
+
+        .file-item.active {
+            background-color: #eff6ff;
+            border-left: 3px solid var(--primary);
+            padding-left: calc(1rem - 3px);
+        }
+
+        .file-icon {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .file-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-name {
+            font-weight: 500;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 0.25rem;
+        }
+
+        .file-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            color: var(--text-sub);
+        }
+
+        .risk-badge {
+            font-size: 0.7rem;
+            padding: 1px 5px;
+            border-radius: 4px;
+            background: #e2e8f0;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .risk-high {
+            background: var(--danger-bg);
+            color: var(--danger);
+            border: 1px solid #fecaca;
+        }
+
+        .risk-medium {
+            background: var(--warning-bg);
+            color: var(--warning);
+            border: 1px solid #fde68a;
+        }
+
+        /* Main Pane Styles */
+        .panel {
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .panel-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .perm-list-container {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .perm-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .perm-item {
+            padding: 0.75rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #e0e7ff;
+            color: #4f46e5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .user-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .user-email {
+            font-size: 0.8rem;
+            color: var(--text-sub);
+        }
+
+        .role-badge {
+            padding: 0.2rem 0.6rem;
+            border-radius: 9999px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .role-OWNER {
+            background-color: #fef3c7;
+            color: #d97706;
+        }
+
+        .role-EDITOR {
+            background-color: #dbeafe;
+            color: #2563eb;
+        }
+
+        .role-VIEWER {
+            background-color: #f1f5f9;
+            color: #64748b;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.4rem;
+            border-radius: 4px;
+            color: var(--text-sub);
+        }
+
+        .action-btn:hover {
+            background-color: #fef2f2;
+            color: var(--danger);
+        }
+
+        /* Details Pane Styles */
+        .details-section {
+            margin-bottom: 2rem;
+        }
+
+        .details-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-sub);
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .status-card {
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: #fafafa;
+            margin-bottom: 1rem;
+        }
+
+        .status-card.danger {
+            background: var(--danger-bg);
+            border-color: #fca5a5;
+        }
+
+        .status-card.warning {
+            background: var(--warning-bg);
+            border-color: #fde047;
+        }
+
+        .status-icon {
+            margin-bottom: 0.5rem;
+        }
+
+        .status-text {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .status-desc {
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+            opacity: 0.8;
+        }
+
+        .fix-btn {
+            width: 100%;
+            margin-top: 1rem;
+            padding: 0.6rem;
+            border-radius: 6px;
+            border: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .fix-btn-danger {
+            background: white;
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+
+        .fix-btn-danger:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+        .add-form {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 0.6rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.875rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.6rem;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        /* Empty State */
+        .empty-icon {
+            width: 48px;
+            height: 48px;
+            color: #cbd5e1;
+            margin-bottom: 1rem;
+        }
+
+        .center-msg {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-sub);
+            text-align: center;
+            padding: 2rem;
+        }
+
+        /* Loading */
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 3px solid var(--primary);
+            width: 24px;
+            height: 24px;
+            -webkit-animation: spin 1s linear infinite;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: #333;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            opacity: 0;
+            transform: translateY(1rem);
+            transition: all 0.3s;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+                <path d="m9 12 2 2 4-4" />
+            </svg>
+            <span>Drive</span> Permissions
+        </h1>
+        <div style="font-size: 0.8rem; color: #64748b;">3-Pane View</div>
+    </header>
+
+    <div class="container">
+        <!-- 1. File List with Tabs -->
+        <div class="pane-files">
+            <div class="sidebar-header">
+                <span>Files</span>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <label
+                        style="font-size: 0.75rem; display: flex; align-items: center; gap: 4px; color: var(--text-sub); cursor: pointer; user-select: none;">
+                        <input type="checkbox" id="onlyOwnerCheck" onchange="reloadAll()" checked> My Own
+                    </label>
+                    <label
+                        style="font-size: 0.75rem; display: flex; align-items: center; gap: 4px; color: var(--danger); cursor: pointer; user-select: none;">
+                        <input type="checkbox" id="onlyRiskyCheck" onchange="reloadAll()"
+                            title="リンクを知っている全員などの公開ファイルを表示"> ⚠️ Risky
+                    </label>
+                    <button class="refresh-btn" onclick="reloadAll()" title="再読み込み">⟳</button>
+                </div>
+            </div>
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchCategory('all', this)">すべて</button>
+                <button class="tab-btn" onclick="switchCategory('spreadsheet', this)">Sheet</button>
+                <button class="tab-btn" onclick="switchCategory('document', this)">Doc</button>
+                <button class="tab-btn" onclick="switchCategory('presentation', this)">Slide</button>
+                <button class="tab-btn" onclick="switchCategory('pdf', this)">PDF</button>
+            </div>
+            <div class="file-list-container" id="fileListScroll">
+                <ul class="file-list" id="fileList">
+                    <li style="padding: 2rem; text-align: center; color: #94a3b8;">
+                        <div class="loading-spinner"></div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 2. User List -->
+        <div class="pane-main">
+            <div id="mainContent" style="height: 100%;">
+                <div class="center-msg">
+                    <svg class="empty-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                        <line x1="3" x2="21" y1="9" y2="9" />
+                        <line x1="9" x2="9" y1="21" y2="9" />
+                    </svg>
+                    <p>ファイルを選択してください</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Details -->
+        <div class="pane-details">
+            <div id="detailsContent" style="height: 100%;">
+                <div class="center-msg">
+                    <p>詳細情報</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast">Action completed</div>
+
+    <script>
+        let currentFileId = null;
+        let currentCategory = 'all';
+        let nextPageToken = null;
+        let isLoading = false;
+        let isFinished = false;
+
+        // Icons
+        const icons = {
+            sheet: `<svg viewBox="0 0 24 24" fill="var(--icon-sheet)" class="file-icon"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/><path d="M10 10h4v2h-4zm0 3h4v2h-4zm-4 0h3v2H6zm0-3h3v2H6zm0-6h3v2H6zm0 9h3v2H6zm4 3h4v2h-4z"/></svg>`,
+            doc: `<svg viewBox="0 0 24 24" fill="var(--icon-doc)" class="file-icon"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6z"/><path d="M6 20V4h7v5h5v11H6z" fill="#fff" fill-opacity=".3"/><path d="M14 2V8h6" fill="var(--bg-color)"/></svg>`,
+            slide: `<svg viewBox="0 0 24 24" fill="var(--icon-slide)" class="file-icon"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM5 19V5h14v14H5z"/><path d="M9.5 15l2.5-3.01L14.5 15h-5z"/></svg>`,
+            pdf: `<svg viewBox="0 0 24 24" fill="var(--icon-pdf)" class="file-icon"><path d="M20 2H8c-1.1 0-2 .9-2 2v12H4v2h2v2h2v-2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/><path d="M14 12c0-1.1-.9-2-2-2s-2 .9-2 2 .9 2 2 2 2-.9 2-2zm-2-4c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>`,
+            unknown: `<svg viewBox="0 0 24 24" fill="var(--icon-default)" class="file-icon"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6z"/></svg>`
+        };
+
+        function getIcon(mime) {
+            if (mime.includes('spreadsheet')) return icons.sheet;
+            if (mime.includes('document')) return icons.doc;
+            if (mime.includes('presentation')) return icons.slide;
+            if (mime.includes('pdf')) return icons.pdf;
+            return icons.unknown;
+        }
+
+        window.onload = function () {
+            loadFiles();
+
+            const scrollContainer = document.getElementById('fileListScroll');
+            scrollContainer.addEventListener('scroll', function () {
+                if (scrollContainer.scrollTop + scrollContainer.clientHeight >= scrollContainer.scrollHeight - 50) {
+                    if (!isLoading && !isFinished) {
+                        loadFiles(nextPageToken);
+                    }
+                }
+            });
+        };
+
+        function switchCategory(cat, btn) {
+            if (currentCategory === cat) return;
+            currentCategory = cat;
+
+            // Update active tab
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Reset list
+            reloadAll();
+        }
+
+        function reloadAll() {
+            currentFileId = null;
+            nextPageToken = null;
+            isFinished = false;
+
+            const listEl = document.getElementById('fileList');
+            listEl.innerHTML = '<li style="padding: 2rem; text-align: center; color: #94a3b8;"><div class="loading-spinner"></div></li>';
+
+            loadFiles();
+        }
+
+        function loadFiles(token = null) {
+            isLoading = true;
+            const listEl = document.getElementById('fileList');
+            // Default to checked for onlyOwner if you want safer defaults, but standard is unchecked usually.
+            // User requested adding checkbox, assuming default state is false.
+            // Wait, in previous snippet I might have set it checked? Let's keep it user controlled.
+            // The user asked for "Myself owner filtering", so maybe unchecked is better as default to show all?
+            // Let's stick to HTML default (checked in this provided snippet just in case user prefers it safest)
+            const onlyOwner = document.getElementById('onlyOwnerCheck').checked;
+            const onlyRisky = document.getElementById('onlyRiskyCheck').checked;
+
+            google.script.run
+                .withSuccessHandler(onFilesLoaded)
+                .withFailureHandler(showListError)
+                .getDriveFiles(token, currentCategory, onlyOwner, onlyRisky);
+        }
+
+        function onFilesLoaded(response) {
+            isLoading = false;
+            const listEl = document.getElementById('fileList');
+
+            if (!response.success) {
+                if (response.error && response.error.indexOf('Drive API') !== -1) {
+                    if (!nextPageToken) {
+                        listEl.innerHTML = `
+                <li style="padding: 1.5rem; color: var(--danger); font-size: 0.9rem;">
+                  <strong>⚠️ Drive APIが必要です</strong><br>
+                  新しい機能を使用するためには設定が必要です。<br>
+                  1. GASエディタの「サービス +」をクリック<br>
+                  2. <strong>Drive API</strong> を追加<br>
+                  3. リロードする
+                </li>`;
+                    }
+                } else {
+                    showError(response.error);
+                }
+                return;
+            }
+
+            // Clean loader on first page
+            if (!nextPageToken && listEl.innerHTML.includes('loading-spinner')) {
+                listEl.innerHTML = '';
+            }
+
+            if ((!response.files || response.files.length === 0) && !nextPageToken) {
+                listEl.innerHTML = '<li style="padding: 1rem; color: var(--text-sub);">No files found matching criteria.</li>';
+                return;
+            }
+
+            nextPageToken = response.nextPageToken;
+            if (!nextPageToken) {
+                isFinished = true;
+            }
+
+            const html = response.files.map(file => {
+                let riskBadge = '';
+                if (file.access === 'ANYONE') {
+                    riskBadge = '<span class="risk-badge risk-high">公開中</span>';
+                } else if (file.access === 'ANYONE_WITH_LINK' || file.access === 'anyoneWithLink') {
+                    riskBadge = '<span class="risk-badge risk-medium">リンク共有</span>';
+                }
+
+                return `
+            <li class="file-item" id="file-${file.id}" onclick="selectFile('${file.id}', this)">
+              ${getIcon(file.mimeType)}
+              <div class="file-content">
+                <div class="file-name" title="${file.name}">${file.name}</div>
+                <div class="file-meta">
+                  <span>${file.lastUpdated.split(' ')[0]}</span>
+                  ${riskBadge}
+                </div>
+              </div>
+            </li>
+          `;
+            }).join('');
+
+            listEl.insertAdjacentHTML('beforeend', html);
+        }
+
+        function showListError(e) {
+            isLoading = false;
+            const listEl = document.getElementById('fileList');
+            if (listEl.children.length > 1) {
+                alert('読み込みエラー: ' + e);
+            } else {
+                listEl.innerHTML = `<li style="padding: 1rem; color: var(--danger);">Error: ${e}</li>`;
+            }
+        }
+
+        // 既存ロジックと共通
+        function selectFile(fileId, element) {
+            currentFileId = fileId;
+
+            document.querySelectorAll('.file-item').forEach(el => el.classList.remove('active'));
+            if (element) element.classList.add('active');
+
+            document.getElementById('mainContent').innerHTML = '<div class="center-msg"><div class="loading-spinner"></div>Loading...</div>';
+            document.getElementById('detailsContent').innerHTML = '<div class="center-msg">Loading...</div>';
+
+            google.script.run
+                .withSuccessHandler(renderFileDetails)
+                .withFailureHandler(showError)
+                .getFilePermissions(fileId);
+        }
+
+        function renderFileDetails(response) {
+            if (!response.success) {
+                showError(response.error);
+                return;
+            }
+
+            currentFileAccess = response.access;
+            renderUserList(response);
+            renderSideDetails(response);
+        }
+
+        function renderUserList(data) {
+            const mainEl = document.getElementById('mainContent');
+            const perms = data.permissions;
+            const roleOrder = { 'OWNER': 0, 'EDITOR': 1, 'VIEWER': 2 };
+            perms.sort((a, b) => roleOrder[a.role] - roleOrder[b.role]);
+
+            const rows = perms.map(p => `
+          <li class="perm-item">
+            <div class="user-info">
+              <div class="avatar">${p.name.charAt(0).toUpperCase()}</div>
+              <div class="user-details">
+                <span class="user-name">${p.name} ${p.role === 'OWNER' ? '(Owner)' : ''}</span>
+                <span class="user-email">${p.email}</span>
+              </div>
+            </div>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <span class="role-badge role-${p.role}">${p.role}</span>
+              ${p.role !== 'OWNER' ? `
+                <button class="action-btn" onclick="removePermission('${p.email}')">✕</button>
+              ` : ''}
+            </div>
+          </li>
+        `).join('');
+
+            mainEl.innerHTML = `
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">共有ユーザー一覧 (${perms.length})</div>
+              <div style="font-size: 0.85rem; color: var(--text-sub);">
+                 ${data.fileName}
+              </div>
+            </div>
+            <div class="perm-list-container">
+              <ul class="perm-list">${rows}</ul>
+            </div>
+          </div>
+        `;
+        }
+
+        function renderSideDetails(data) {
+            const detailsEl = document.getElementById('detailsContent');
+
+            // Risky check
+            let statusCard = '';
+            if (data.access === 'ANYONE') {
+                statusCard = `
+            <div class="status-card danger">
+              <div class="status-icon">🚨</div>
+              <div class="status-text">Web上で一般公開中</div>
+              <div class="status-desc">誰でも検索・閲覧が可能です。非常に危険な状態です。</div>
+              <button class="fix-btn fix-btn-danger" onclick="makePrivate()">
+                🔒 今すぐ非公開にする
+              </button>
+            </div>
+          `;
+            } else if (data.access === 'ANYONE_WITH_LINK') {
+                statusCard = `
+            <div class="status-card warning">
+              <div class="status-icon">⚠️</div>
+              <div class="status-text">リンクを知っている全員</div>
+              <div class="status-desc">URLを知っていれば誰でもアクセスできます。</div>
+              <button class="fix-btn fix-btn-danger" onclick="makePrivate()">
+                🔒 非公開（招待のみ）にする
+              </button>
+            </div>
+          `;
+            } else {
+                statusCard = `
+            <div class="status-card" style="background: #ecfdf5; border-color: #a7f3d0; color: #065f46;">
+              <div class="status-icon">🔒</div>
+              <div class="status-text">安全な状態</div>
+              <div class="status-desc">招待されたユーザーのみアクセス可能です。</div>
+            </div>
+          `;
+            }
+
+            detailsEl.innerHTML = `
+          <div class="details-section">
+            <div class="details-title">Security Status</div>
+            ${statusCard}
+          </div>
+
+          <div class="details-section">
+            <div class="details-title">Add User</div>
+            <div class="add-form">
+              <div>
+                <label style="font-size: 0.75rem; font-weight: 600; margin-bottom: 4px; display: block;">Email</label>
+                <input type="email" id="newEmail" placeholder="user@example.com">
+              </div>
+              <div>
+                <label style="font-size: 0.75rem; font-weight: 600; margin-bottom: 4px; display: block;">Role</label>
+                <select id="newRole">
+                  <option value="VIEWER">閲覧者 (Viewer)</option>
+                  <option value="EDITOR">編集者 (Editor)</option>
+                </select>
+              </div>
+              <button class="btn-primary" onclick="addPermission()" id="btnAdd">追加する</button>
+            </div>
+          </div>
+
+          <div class="details-section">
+            <div class="details-title">Quick Links</div>
+            <a href="${data.fileUrl}" target="_blank" style="display: block; padding: 0.75rem; background: white; border: 1px solid var(--border); border-radius: 6px; text-decoration: none; color: var(--primary); font-size: 0.9rem; text-align: center;">
+              ファイルを開く ↗
+            </a>
+          </div>
+        `;
+        }
+
+        function makePrivate() {
+            if (!confirm('本当にこのファイルを「招待されたユーザーのみ」に変更しますか？\nリンクを知っているだけのユーザーはアクセスできなくなります。')) return;
+            const btn = document.querySelector('.fix-btn');
+            if (btn) { btn.disabled = true; btn.innerText = '更新中...'; }
+            google.script.run
+                .withSuccessHandler(response => {
+                    if (response.success) {
+                        showToast('設定を変更しました');
+                        reloadCurrentFile();
+                        const itemMeta = document.querySelector(`#file-${currentFileId} .file-meta`);
+                        if (itemMeta) {
+                            const badge = itemMeta.querySelector('.risk-badge');
+                            if (badge) badge.remove();
+                        }
+                    } else {
+                        alert(response.error);
+                        if (btn) { btn.disabled = false; btn.innerText = 'もう一度試す'; }
+                    }
+                })
+                .withFailureHandler(showError).setFilePrivate(currentFileId);
+        }
+
+        function reloadCurrentFile() {
+            if (currentFileId) {
+                google.script.run
+                    .withSuccessHandler(renderFileDetails).withFailureHandler(showError).getFilePermissions(currentFileId);
+            }
+        }
+
+        function addPermission() {
+            const email = document.getElementById('newEmail').value.trim();
+            const role = document.getElementById('newRole').value;
+            const btn = document.getElementById('btnAdd');
+            if (!email) return;
+            btn.disabled = true; btn.textContent = '処理中...';
+            google.script.run
+                .withSuccessHandler((response) => {
+                    if (response.success) { showToast('ユーザーを追加しました'); renderFileDetails(response); }
+                    else { alert(response.error); btn.disabled = false; btn.textContent = '追加する'; }
+                })
+                .withFailureHandler((e) => { alert(e); btn.disabled = false; btn.textContent = '追加する'; })
+                .addUserPermission(currentFileId, email, role);
+        }
+
+        function removePermission(email) {
+            if (!confirm(`${email} の権限を削除しますか？`)) return;
+            google.script.run
+                .withSuccessHandler((response) => {
+                    if (response.success) { showToast('削除しました'); renderFileDetails(response); }
+                    else { alert(response.error); }
+                })
+                .withFailureHandler(showError).removeUserPermission(currentFileId, email);
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg; t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        function showError(e) { console.error(e); alert('エラー: ' + e); }
+    </script>
+</body>
+
+</html>
