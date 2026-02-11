@@ -1,14 +1,6 @@
- (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
-diff --git a/README.md b/README.md
-index 6b1238e2a522ef908c0d1d85af4448b3b0d18fa8..a8bf06dc20f26d8300d8313c1cfed5df381cf126 100644
---- a/README.md
-+++ b/README.md
-@@ -1,4 +1,70 @@
--# Googledrive-permisson
--どんなあぷり？
+
 +# Drive Permission Manager
  
--あとでやってみよう
 +Google ドライブ上の **共有リスクを可視化し、権限を素早く整理するための Google Apps Script (GAS) Web アプリ**です。  
 +`Code.gs`（サーバー側）と `index.html`（UI）で構成され、3 ペインでファイル一覧・共有ユーザー・セキュリティ状態を同時に確認できます。
 +
